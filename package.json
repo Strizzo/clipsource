@@ -1,0 +1,89 @@
+{
+    "name": "clipsource",
+    "displayName": "ClipSource",
+    "description": "Copy codebase as markdown-formatted text for AI chat",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "main": "./dist/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "clipsource.copyToClipboard",
+                "title": "Copy Codebase as Markdown"
+            }
+        ],
+        "menus": {
+            "explorer/context": [
+                {
+                    "command": "clipsource.copyToClipboard",
+                    "group": "navigation"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "ClipSource",
+            "properties": {
+                "clipsource.ignoreDirs": {
+                    "type": "array",
+                    "default": [
+                        "venv",
+                        ".venv",
+                        "env",
+                        ".env",
+                        "__pycache__",
+                        ".git",
+                        "node_modules",
+                        ".pytest_cache",
+                        ".idea",
+                        ".vscode"
+                    ],
+                    "description": "Directories to ignore when copying codebase",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "clipsource.maxFiles": {
+                    "type": "number",
+                    "default": 100,
+                    "description": "Maximum number of files to process"
+                },
+                "clipsource.maxTotalLines": {
+                    "type": "number",
+                    "default": 50000,
+                    "description": "Maximum total lines of code to process"
+                },
+                "clipsource.ignorePatterns": {
+                    "type": "array",
+                    "default": ["**/*.pyc"],
+                    "description": "Glob patterns to ignore (e.g., '**/test/*', '**/*.test.py')",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./"
+    },
+    "dependencies": {
+        "minimatch": "^5.1.6"
+    },
+    "devDependencies": {
+        "@types/minimatch": "^5.1.2",
+        "@types/node": "^16.18.125",
+        "@types/vscode": "^1.96.0",
+        "typescript": "^4.9.5"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+}

@@ -2,9 +2,14 @@
     "name": "clipsource",
     "displayName": "ClipSource",
     "description": "Copy codebase as markdown-formatted text for AI chat",
-    "version": "0.0.1",
+    "version": "1.0.1",
+    "publisher": "Strizzo",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/strizzo/clipsource.git"
+    },
     "engines": {
-        "vscode": "^1.60.0"
+        "vscode": "^1.96.0"
     },
     "categories": [
         "Other"
@@ -83,7 +88,12 @@
         "@types/vscode": "^1.96.0",
         "typescript": "^4.9.5"
     },
-    "keywords": [],
-    "author": "",
-    "license": "ISC"
+    "author": "Strizzo",
+    "license": "MIT",
+    "keywords": [
+        "python",
+        "markdown",
+        "clipboard",
+        "source code"
+    ]
 }

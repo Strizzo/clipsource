@@ -9,6 +9,21 @@ interface Configuration {
     maxTotalLines: number;
 }
 
+interface LanguageConfig {
+    extensions: string[];
+    markdownTag: string;
+}
+
+const LANGUAGE_CONFIGS: { [key: string]: LanguageConfig } = {
+    'python': { extensions: ['.py'], markdownTag: 'python' },
+    'julia': { extensions: ['.jl'], markdownTag: 'julia' },
+    'java': { extensions: ['.java'], markdownTag: 'java' },
+    'r': { extensions: ['.r', '.R'], markdownTag: 'r' },
+    'typescript': { extensions: ['.ts'], markdownTag: 'typescript' },
+    'javascript': { extensions: ['.js'], markdownTag: 'javascript' }
+    // Add more languages as needed
+};
+
 export function activate(context: vscode.ExtensionContext) {
     let disposable = vscode.commands.registerCommand('clipsource.copyToClipboard', async (uri?: vscode.Uri) => {
         try {
@@ -21,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
                 targetUri = workspaceFolders[0].uri;
             }
 
-            const result = await collectPythonFiles(targetUri);
+            const result = await collectFiles(targetUri);
             
             if (result.reachedMaxFiles) {
                 vscode.window.showWarningMessage(`File limit reached (${result.processedFiles} files). Some files were skipped.`);
@@ -31,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
             
             if (result.output.trim() === '') {
-                vscode.window.showInformationMessage('No Python files found in the selected directory');
+                vscode.window.showInformationMessage('No source files found in the selected directory');
                 return;
             }
 
@@ -78,7 +93,14 @@ interface CollectionResult {
     reachedMaxLines: boolean;
 }
 
-async function collectPythonFiles(folderUri: vscode.Uri): Promise<CollectionResult> {
+function getLanguageFromExtension(filename: string): LanguageConfig | undefined {
+    const ext = path.extname(filename).toLowerCase();
+    return Object.values(LANGUAGE_CONFIGS).find(config => 
+        config.extensions.includes(ext)
+    );
+}
+
+async function collectFiles(folderUri: vscode.Uri): Promise<CollectionResult> {
     const config = getConfiguration();
     const output: string[] = [];
     let processedFiles = 0;
@@ -89,7 +111,7 @@ async function collectPythonFiles(folderUri: vscode.Uri): Promise<CollectionResu
     async function processDirectory(uri: vscode.Uri): Promise<boolean> {
         try {
             const entries = await vscode.workspace.fs.readDirectory(uri);
-            
+
             for (const [name, type] of entries) {
                 if (processedFiles >= config.maxFiles || totalLines >= config.maxTotalLines) {
                     reachedMaxFiles = processedFiles >= config.maxFiles;
@@ -107,19 +129,22 @@ async function collectPythonFiles(folderUri: vscode.Uri): Promise<CollectionResu
                 if (type === vscode.FileType.Directory) {
                     const shouldContinue = await processDirectory(currentUri);
                     if (!shouldContinue) return false;
-                } else if (type === vscode.FileType.File && name.endsWith('.py')) {
-                    const content = await vscode.workspace.fs.readFile(currentUri);
-                    const fileContent = Buffer.from(content).toString('utf-8');
-                    const lineCount = fileContent.split('\n').length;
-                    
-                    if (totalLines + lineCount > config.maxTotalLines) {
-                        reachedMaxLines = true;
-                        return false;
-                    }
+                } else if (type === vscode.FileType.File) {
+                    const langConfig = getLanguageFromExtension(name);
+                    if (langConfig) {
+                        const content = await vscode.workspace.fs.readFile(currentUri);
+                        const fileContent = Buffer.from(content).toString('utf-8');
+                        const lineCount = fileContent.split('\n').length;
+                        
+                        if (totalLines + lineCount > config.maxTotalLines) {
+                            reachedMaxLines = true;
+                            return false;
+                        }
 
-                    totalLines += lineCount;
-                    processedFiles++;
-                    output.push(`File: ${relativePath}\n\`\`\`python\n${fileContent}\n\`\`\`\n`);
+                        totalLines += lineCount;
+                        processedFiles++;
+                        output.push(`File: ${relativePath}\n\`\`\`${langConfig.markdownTag}\n${fileContent}\n\`\`\`\n`);
+                    }
                 }
             }
             return true;
